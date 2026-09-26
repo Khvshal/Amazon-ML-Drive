@@ -1,0 +1,79 @@
+# ========================
+# Dataset (large TSV files)
+# ========================
+dataset/
+
+# ========================
+# Output files
+# ========================
+output/*.tsv
+
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+*.whl
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# ========================
+# Jupyter Notebooks
+# ========================
+.ipynb_checkpoints/
+*.ipynb
+
+# ========================
+# IDE / Editor
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ========================
+# OS generated
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ========================
+# Model artifacts & checkpoints
+# ========================
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.pkl
+*.joblib
+*.bin
+models/
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/
+
+# ========================
+# Misc
+# ========================
+*.zip
+*.tar.gz
+*.7z
