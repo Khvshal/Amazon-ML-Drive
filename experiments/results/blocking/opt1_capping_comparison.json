@@ -1,0 +1,35 @@
+[
+  {
+    "Configuration":"V1 Baseline: Arbitrary Cap @ 40",
+    "Macro F0.5":0.9539023813,
+    "Precision":0.9762722646,
+    "Recall":0.9054389313,
+    "Singleton F0.5":1.0,
+    "FP":6,
+    "FN":181,
+    "Threshold":0.86,
+    "Candidates\/S1":27.6
+  },
+  {
+    "Configuration":"OPT-1: Prioritized Cap @ 40",
+    "Macro F0.5":0.9850581635,
+    "Precision":0.9952449109,
+    "Recall":0.9628657761,
+    "Singleton F0.5":1.0,
+    "FP":11,
+    "FN":79,
+    "Threshold":0.82,
+    "Candidates\/S1":27.6
+  },
+  {
+    "Configuration":"OPT-1: Prioritized Cap @ 50",
+    "Macro F0.5":0.9849946237,
+    "Precision":0.9941612141,
+    "Recall":0.9657919847,
+    "Singleton F0.5":1.0,
+    "FP":13,
+    "FN":74,
+    "Threshold":0.76,
+    "Candidates\/S1":29.4
+  }
+]

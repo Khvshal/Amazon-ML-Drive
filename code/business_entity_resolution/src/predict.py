@@ -29,7 +29,7 @@ from src.blocking.exact import block_exact, block_sorted_tokens
 from src.blocking.rare_tokens import block_rare_tokens
 from src.blocking.numeric import block_numeric
 from src.blocking.tfidf import block_tfidf
-from src.blocking.candidate_generator import union_candidates, cap_candidates
+from src.blocking.candidate_generator import union_candidates, cap_candidates, prioritized_cap_candidates
 from src.features.pair_features import extract_pair_features, build_pair_feature_matrix
 from src.models.lightgbm_model import LightGBMMatcher
 from src.decision import EntityDecisionEngine
@@ -94,7 +94,7 @@ def load_s2s3_for_country(test_dir: str, country: str, max_records: int = None) 
 
 
 def run_country_blocking(s1_entities: list, s2s3_entities: list, cap: int = 40) -> dict:
-    """Run full blocking union country-scoped."""
+    """Run full blocking union country-scoped with prioritized consensus capping."""
     ba = block_exact(s1_entities, s2s3_entities, key_field='name_lower')
     bb = block_exact(s1_entities, s2s3_entities, key_field='name_core')
     bb2 = block_sorted_tokens(s1_entities, s2s3_entities, tokens_field='name_sorted_tokens')
@@ -104,11 +104,10 @@ def run_country_blocking(s1_entities: list, s2s3_entities: list, cap: int = 40) 
     bf = block_tfidf(s1_entities, s2s3_entities, text_field='name_core', analyzer='word', ngram_range=(1, 2), top_k=10, min_similarity=0.15)
     bg = block_tfidf(s1_entities, s2s3_entities, text_field='addr_normalized', analyzer='char_wb', ngram_range=(2, 5), top_k=10, min_similarity=0.15)
     
-    union = union_candidates(ba, bb, bb2, bc, bd, be, bf, bg)
+    blocks_dict = {'A': ba, 'B': bb, 'B2': bb2, 'C': bc, 'D': bd, 'E': be, 'F': bf, 'G': bg}
     if cap > 0:
-        capped = cap_candidates(union, max_per_s1=cap)
-        return capped
-    return union
+        return prioritized_cap_candidates(blocks_dict, max_per_s1=cap)
+    return union_candidates(ba, bb, bb2, bc, bd, be, bf, bg)
 
 
 def main():

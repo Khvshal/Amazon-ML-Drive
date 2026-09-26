@@ -38,12 +38,74 @@ def union_candidates(*block_outputs: dict) -> dict:
     return merged
 
 
-def cap_candidates(candidates: dict, max_per_s1: int = 50) -> dict:
-    """Cap the number of candidates per S1 entity.
+def prioritized_cap_candidates(
+    blocks_dict: dict,
+    max_per_s1: int = 40,
+    block_weights: dict = None
+) -> dict:
+    """Cap candidates per S1 entity by prioritizing candidates using block confidence and multi-block consensus.
     
-    When an S1 entity has more than max_per_s1 candidates,
-    keeps only the first max_per_s1 (arbitrary — for a smarter cap,
-    score candidates first and keep top-scoring ones).
+    Instead of arbitrary set slicing (which dropped ~65% of false negatives in the baseline audit),
+    scores each candidate by summing weights of all blocking passes that retrieved it:
+      - Exact name match (A): weight 100.0
+      - Core name match (B): weight 80.0
+      - Sorted tokens match (B2): weight 60.0
+      - Name char TF-IDF (E): weight 45.0
+      - Name word TF-IDF (F): weight 40.0
+      - Numeric address match (D): weight 35.0
+      - Address char TF-IDF (G): weight 30.0
+      - Rare token match (C): weight 20.0
+      
+    Candidates appearing in multiple blocks receive combined consensus scores.
+    For each S1, sorts candidates descending by score and retains top max_per_s1.
+    
+    Args:
+        blocks_dict: dict mapping block_key ('A', 'B', etc.) -> (dict mapping s1_id -> set of candidate_ids)
+        max_per_s1: maximum candidates to keep per S1 entity
+        block_weights: optional dict of custom weights per block key
+        
+    Returns:
+        dict mapping s1_id -> set of top-scoring candidate_ids
+    """
+    if block_weights is None:
+        block_weights = {
+            'A': 100.0,   # Exact name
+            'B': 80.0,    # Core name
+            'B2': 60.0,   # Sorted tokens
+            'E': 45.0,    # Name char TF-IDF
+            'F': 40.0,    # Name word TF-IDF
+            'D': 35.0,    # Numeric address
+            'G': 30.0,    # Address char TF-IDF
+            'C': 20.0,    # Rare tokens
+        }
+        
+    all_s1 = set()
+    for b_key in blocks_dict:
+        all_s1.update(blocks_dict[b_key].keys())
+        
+    capped = {}
+    for sid in all_s1:
+        cand_scores = {}
+        for b_key, b_cands_map in blocks_dict.items():
+            w = block_weights.get(b_key, 10.0)
+            b_cands = b_cands_map.get(sid, set())
+            for cid in b_cands:
+                cand_scores[cid] = cand_scores.get(cid, 0.0) + w
+                
+        if len(cand_scores) <= max_per_s1:
+            capped[sid] = set(cand_scores.keys())
+        else:
+            sorted_cands = sorted(cand_scores.keys(), key=lambda c: (cand_scores[c], c), reverse=True)
+            capped[sid] = set(sorted_cands[:max_per_s1])
+            
+    return capped
+
+
+def cap_candidates(candidates: dict, max_per_s1: int = 50) -> dict:
+    """Cap the number of candidates per S1 entity using arbitrary slicing.
+    
+    Note: For production / competition pipeline, use prioritized_cap_candidates()
+    which prevents losing true matches.
     
     Args:
         candidates: dict mapping s1_entity_id -> set of candidate_ids
