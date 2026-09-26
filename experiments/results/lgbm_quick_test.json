@@ -1,0 +1,21 @@
+{
+  "experiment": "lgbm_quick_test",
+  "timestamp": "2026-09-26 17:15:29",
+  "sample_s1_total": 1000,
+  "train_s1_count": 750,
+  "val_s1_count": 250,
+  "val_blocking_recall": 0.9411,
+  "candidate_cap": 40,
+  "model": "LightGBM",
+  "optimal_threshold": 0.7,
+  "raw_macro_f05": 0.9594,
+  "macro_f05": 0.9566,
+  "macro_precision": 0.9776,
+  "macro_recall": 0.9112,
+  "singleton_f05": 1.0,
+  "non_singleton_f05": 0.9544,
+  "val_tp": 787,
+  "val_fp": 5,
+  "val_fn": 79,
+  "runtime_sec": 318.8
+}

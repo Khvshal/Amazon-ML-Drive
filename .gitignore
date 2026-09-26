@@ -2,6 +2,7 @@
 # Dataset (large TSV files)
 # ========================
 dataset/
+Dataset/
 
 # ========================
 # Output files
@@ -33,6 +34,7 @@ env/
 # ========================
 .ipynb_checkpoints/
 *.ipynb
+!notebooks/*.ipynb
 
 # ========================
 # IDE / Editor

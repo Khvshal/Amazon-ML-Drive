@@ -1,0 +1,343 @@
+================================================================================
+PHASE 1 — DATASET FORENSICS REPORT
+================================================================================
+
+SECTION 1: ROW COUNTS & SCHEMAS & NULLS
+------------------------------------------------------------
+
+--- train_source1 ---
+  Shape: (2206821, 4)
+  Columns: ['entity_id', 'business_name', 'business_address', 'country']
+  entity_id: 0 null, 0 empty string (2206821 total)
+  business_name: 0 null, 0 empty string (2206821 total)
+  business_address: 0 null, 0 empty string (2206821 total)
+  country: 0 null, 0 empty string (2206821 total)
+  Country distribution:
+    US: 1323633 (59.98%)
+    India: 883188 (40.02%)
+
+--- train_source2 ---
+  Shape: (5034616, 4)
+  Columns: ['entity_id', 'business_name', 'business_address', 'country']
+  entity_id: 0 null, 0 empty string (5034616 total)
+  business_name: 2 null, 0 empty string (5034616 total)
+  business_address: 168967 null, 0 empty string (5034616 total)
+  country: 0 null, 0 empty string (5034616 total)
+  Country distribution:
+    US: 3016817 (59.92%)
+    India: 2017799 (40.08%)
+
+--- train_source3 ---
+  Shape: (5285603, 4)
+  Columns: ['entity_id', 'business_name', 'business_address', 'country']
+  entity_id: 0 null, 0 empty string (5285603 total)
+  business_name: 13 null, 0 empty string (5285603 total)
+  business_address: 175916 null, 0 empty string (5285603 total)
+  country: 0 null, 0 empty string (5285603 total)
+  Country distribution:
+    US: 3170056 (59.98%)
+    India: 2115547 (40.02%)
+
+--- train_ground_truth ---
+  Shape: (2206821, 2)
+  Columns: ['source1_entity_id', 'matched_entity_ids']
+  source1_entity_id: 0 null, 0 empty string (2206821 total)
+  matched_entity_ids: 123247 null, 0 empty string (2206821 total)
+
+--- test_source1 ---
+  Shape: (1732544, 4)
+  Columns: ['entity_id', 'business_name', 'business_address', 'country']
+  entity_id: 0 null, 0 empty string (1732544 total)
+  business_name: 0 null, 0 empty string (1732544 total)
+  business_address: 0 null, 0 empty string (1732544 total)
+  country: 0 null, 0 empty string (1732544 total)
+  Country distribution:
+    India: 809986 (46.75%)
+    US: 663106 (38.27%)
+    France: 259452 (14.98%)
+
+--- test_source2 ---
+  Shape: (4887273, 4)
+  Columns: ['entity_id', 'business_name', 'business_address', 'country']
+  entity_id: 0 null, 0 empty string (4887273 total)
+  business_name: 46 null, 0 empty string (4887273 total)
+  business_address: 129408 null, 0 empty string (4887273 total)
+  country: 0 null, 0 empty string (4887273 total)
+  Country distribution:
+    India: 2312565 (47.32%)
+    US: 1871330 (38.29%)
+    France: 703378 (14.39%)
+
+--- test_source3 ---
+  Shape: (5082316, 4)
+  Columns: ['entity_id', 'business_name', 'business_address', 'country']
+  entity_id: 0 null, 0 empty string (5082316 total)
+  business_name: 59 null, 0 empty string (5082316 total)
+  business_address: 136098 null, 0 empty string (5082316 total)
+  country: 0 null, 0 empty string (5082316 total)
+  Country distribution:
+    India: 2405000 (47.32%)
+    US: 1945701 (38.28%)
+    France: 731615 (14.40%)
+
+============================================================
+SECTION 2: MATCH CARDINALITY (ground truth)
+============================================================
+
+Total S1 entities in ground truth: 2206821
+  0 matches: 123247 entities (5.58%)
+  1 matches: 119157 entities (5.40%)
+  2 matches: 375212 entities (17.00%)
+  3 matches: 530841 entities (24.05%)
+  4 matches: 484115 entities (21.94%)
+  5 matches: 321957 entities (14.59%)
+  6+ matches: 252292 entities (11.43%)
+  Max matches: 11
+
+S2 match count distribution:
+  0: 287745
+  1: 789108
+  2: 652779
+  3: 333957
+  4: 119078
+  5: 24154
+
+S3 match count distribution:
+  0: 266276
+  1: 716417
+  2: 668375
+  3: 372443
+  4: 145116
+  5: 35378
+  6+: 2816
+
+S1 entities with at least one S2 match: 1919076
+S1 entities with at least one S3 match: 1940545
+S1 entities with both S2 and S3 matches: 1776047
+
+Total positive pairs (full ground truth): 7638365
+Sampled 30000 S1 entities -> 109688 pairs for similarity analysis
+
+============================================================
+SECTION 3: POSITIVE-PAIR SIMILARITY ANALYSIS
+============================================================
+Loaded 139688 entities for similarity analysis
+Missing from lookup: 0
+Using 109688 sampled pairs for similarity computation
+
+Analyzed 109688 pairs (skipped 0 due to missing lookup)
+
+--- Name similarity (across all pairs) ---
+  Exact raw:        5065/109688 (4.62%)
+  Exact normalized: 17289/109688 (15.76%)
+  Char Jaccard:  mean=0.8029  med=0.8889  p5=0.0357  p25=0.7500  p75=1.0000  p95=1.0000
+  Token Jaccard: mean=0.5602  med=0.6000  p5=0.0000  p25=0.3333  p75=0.7500  p95=1.0000
+
+--- Address similarity (across all pairs) ---
+  Exact raw:        2435/109688 (2.22%)
+  Exact normalized: 8033/109688 (7.32%)
+  Char Jaccard:  mean=0.8315  med=0.9000  p5=0.4286  p25=0.7742  p75=0.9630  p95=1.0000
+  Token Jaccard: mean=0.5227  med=0.5000  p5=0.0833  p25=0.3333  p75=0.7143  p95=1.0000
+
+--- Missingness in positive pairs ---
+  S1 name empty:    0
+  Match name empty: 0
+  S1 addr empty:    0
+  Match addr empty: 4779
+
+--- Country equality ---
+  Same country: 109688/109688 (100.00%)
+
+--- Breakdown by source pair ---
+
+  S1xS2 (53024 pairs, 48.3%):
+    Name exact norm: 15.76%
+    Name char Jaccard: mean=0.7944  med=0.8889
+    Name token Jaccard: mean=0.5540  med=0.6000
+    Addr exact norm: 10.55%
+    Addr char Jaccard: mean=0.8475  med=0.9167
+    Addr token Jaccard: mean=0.5852  med=0.6154
+    Addr empty (match side): 2364
+
+  S1xS3 (56664 pairs, 51.7%):
+    Name exact norm: 15.76%
+    Name char Jaccard: mean=0.8108  med=0.8824
+    Name token Jaccard: mean=0.5661  med=0.6000
+    Addr exact norm: 4.30%
+    Addr char Jaccard: mean=0.8164  med=0.8824
+    Addr token Jaccard: mean=0.4643  med=0.4286
+    Addr empty (match side): 2415
+
+============================================================
+SECTION 4: REPRESENTATIVE EXAMPLES
+============================================================
+
+--- 15 HARDEST positive pairs (lowest name char Jaccard) ---
+
+  #1 name_char=0.0000 name_token=0.0000 addr_char=0.6129
+    S1  [S1-792859466]: 'Aarogya & Co' | '50/C Keshab Chandra Street, Kolkata, Calcutta, West Bengal' | India
+    Match [S2-299289809]: 'Wexflux' | 'পশ্চিমবঙ্গ, KOLKATA, #50/C KESHAB CHANDRA STREET, CALCUTTA' | India
+
+  #2 name_char=0.0000 name_token=0.0000 addr_char=0.9524
+    S1  [S1-659101573]: 'Empire Ridge LLC' | '3901 Willow View Drive, Lake In The Hills, IL' | US
+    Match [S3-792686825]: 'Tavof1ux' | '#3901 Willow View Drive, Lake In The Hills, Illinois' | US
+
+  #3 name_char=0.0000 name_token=0.0000 addr_char=0.5556
+    S1  [S1-573104988]: 'Lanco & Sons Pvt Ltd' | 'Shukan Status, Opp.Shukan Residency New S.G Road, Gota, C-102, Ahmedabad, Gujarat, Ahmedabad' | India
+    Match [S3-102991195]: 'Iriwex' | 'C-102, Ahmedabad, GJ' | India
+
+  #4 name_char=0.0000 name_token=0.0000 addr_char=0.7391
+    S1  [S1-954763537]: 'Bmj Holdings' | 'Meduvil Nalakath Diya Mahal, K P Road Chemmad, Tirurangadi, Malappuram, Malappuram, Malapuram, Kerala' | India
+    Match [S2-274421286]: 'Zetazetawex' | '546 MEDUVIL NALAKATH DIYA MAHAL, MALAPURAM, MALAPPURAM, Keralam' | India
+
+  #5 name_char=0.0233 name_token=0.0000 addr_char=1.0000
+    S1  [S1-526454983]: 'Aditya First Technologies Private Limited' | 'Moh.Anta Khoti Ward No.26, Gaya, Bihar' | India
+    Match [S2-785789065]: 'आदित्य फर्स्ट टेक्नोलॉजीज प्राइवेट लिमिटेड' | 'MOH.ANTA KHOTI WARD NO.26, GAYA, Bihar' | India
+
+  #6 name_char=0.0233 name_token=0.0000 addr_char=1.0000
+    S1  [S1-526454983]: 'Aditya First Technologies Private Limited' | 'Moh.Anta Khoti Ward No.26, Gaya, Bihar' | India
+    Match [S3-21413401]: 'आदित्य फर्स्ट टेक्नोलॉजीज प्राइवेट लिमिटेड' | 'Moh.anta Khoti Ward No.26, Gaya, BR' | India
+
+  #7 name_char=0.0233 name_token=0.0000 addr_char=1.0000
+    S1  [S1-201419988]: 'Future Technologies Private Limited' | 'N.B.S House, Kozhikode Jn, Katttadi Po, Pooyappally, Kottarakkara, Kollam, Kerala' | India
+    Match [S2-952081621]: 'ഫ്യൂച്ചർ ടെക്നോളജീസ് പ്രൈവറ്റ് ലിമിറ്റഡ്' | 'KOLLAM, KOZHIKODE JN, KATTTADI PO, POOYAPPALLY, KOTTARAKKARA, N.B.S HOUSE, Kerala, KOLLAM' | India
+
+  #8 name_char=0.0233 name_token=0.0000 addr_char=0.8148
+    S1  [S1-201419988]: 'Future Technologies Private Limited' | 'N.B.S House, Kozhikode Jn, Katttadi Po, Pooyappally, Kottarakkara, Kollam, Kerala' | India
+    Match [S2-266627918]: 'ഫ്യൂച്ചർ ടെക്നോളജീസ് പ്രൈവറ്റ് ലിമിറ്റഡ്' | 'N.B.S HOUSE, KOZHIKODE JN, KATTTADI PO, POOYAPPALLY, KOTTARAKKARA, KOLLAM, കേരളം' | India
+
+  #9 name_char=0.0238 name_token=0.0000 addr_char=0.8333
+    S1  [S1-345224122]: 'Seven Urban Technologies Private Limited' | 'Kerala, 01St Floor, K.K Francis Building, Ayyanthole Lane, High Road, Building No. Xxv/2159, Thrissur' | India
+    Match [S2-936409922]: 'സെവൻ അർബൻ ടെക്നോളജീസ് പ്രൈവറ്റ് ലിമിറ്റഡ്' | 'BUILDING NO. XXV/2159, Keralam, THRISSUR' | India
+
+  #10 name_char=0.0238 name_token=0.0000 addr_char=1.0000
+    S1  [S1-736989503]: 'Om Future Technologies Private Limited' | 'Office No.303, 3Rd Fl, Pno-Wa-121, Rohini Complex, Shakarpur, East Delhi, Delhi' | India
+    Match [S2-238939754]: 'ॐ फ्यूचर टेक्नोलॉजीज प्राइवेट लिमिटेड' | 'OFFICE NO.0303, 3RD FL, PNO-WA-121, ROHINI COMPLEX, SHAKARPUR, EAST DELHI, Delhi' | India
+
+  #11 name_char=0.0238 name_token=0.0000 addr_char=1.0000
+    S1  [S1-736989503]: 'Om Future Technologies Private Limited' | 'Office No.303, 3Rd Fl, Pno-Wa-121, Rohini Complex, Shakarpur, East Delhi, Delhi' | India
+    Match [S2-657746442]: 'ॐ फ्यूचर टेक्नोलॉजीज प्राइवेट लिमिटेड' | 'OFFICE NO.0303, 3RD FL, PNO-WA-121, ROHINI COMPLEX, SHAKARPUR, EAST DELHI, Delhi' | India
+
+  #12 name_char=0.0238 name_token=0.0000 addr_char=0.8438
+    S1  [S1-736989503]: 'Om Future Technologies Private Limited' | 'Office No.303, 3Rd Fl, Pno-Wa-121, Rohini Complex, Shakarpur, East Delhi, Delhi' | India
+    Match [S3-736516913]: 'ॐ फ्यूचर टेक्नोलॉजीज प्राइवेट लिमिटेड' | 'Office No.303, 3Rd Fl, Pno-wa-121, Rohini Complex, Shakarpur, East Delhi, दिल्ली' | India
+
+  #13 name_char=0.0244 name_token=0.0000 addr_char=0.5185
+    S1  [S1-810816325]: 'Aditya Global Industries Private Limited' | '3, Pleasant Park, Ravindra High School Road House No - 435/3/2/26, Nashik, Maharashtra' | India
+    Match [S2-792794552]: 'आदित्य ग्लोबल इंडस्ट्रीज प्राइवेट लिमिटेड' | '3, NULL, NASHIK, Maharashtra' | India
+
+  #14 name_char=0.0244 name_token=0.0000 addr_char=0.7222
+    S1  [S1-810816325]: 'Aditya Global Industries Private Limited' | '3, Pleasant Park, Ravindra High School Road House No - 435/3/2/26, Nashik, Maharashtra' | India
+    Match [S3-802126228]: 'आदित्य ग्लोबल इंडस्ट्रीज प्राइवेट लिमिटेड' | 'Block E-616 3, Pleasant Park, Ravindra High School Road House No - 435/3/2/26, Nashik, महाराष्ट्र' | India
+
+  #15 name_char=0.0244 name_token=0.0000 addr_char=1.0000
+    S1  [S1-643230076]: 'Apex Sky Technology Private Limited' | 'Maharashtra, Mumbai City, Sh-4, Alakananda Shiv Vallabh, Nr Alakananda Ground Shiv Vallabh Rd, Rawal Pada, Dahisar (Ea, St), Mumbai' | India
+    Match [S2-766977015]: 'एपेक्स स्काई टेक्नोलॉजी प्राइवेट लिमिटेड' | 'SH-4, ALAKANANDA SHIV VALLABH, NR ALAKANANDA GROUND SHIV VALLABH RD, RAWAL PADA, DAHISAR (EA, ST), GREATER MUMBAI, MUMBAI CITY, Maharashtra' | India
+
+--- 15 HARDEST positive pairs (lowest address char Jaccard) ---
+
+  #1 addr_char=0.0000 addr_token=0.0000 name_char=0.9286
+    S1  [S1-394680937]: 'Royal Developers Private Limited' | 'Xii/682, Kottilil Complex, Thrissur Road, Kechery P.O.Kechery, Choondal Gramapanchayath, Thrissur, Kerala' | India
+    Match [S3-740785174]: 'Royal Developers Private Ltd' | '' | India
+
+  #2 addr_char=0.0000 addr_token=0.0000 name_char=0.9333
+    S1  [S1-88621243]: 'Jackson Andretti LLC' | '40710 Rogers Crossing Road, Wilna, NY' | US
+    Match [S2-430289783]: 'Jackson Ándretti LLC' | '' | US
+
+  #3 addr_char=0.0000 addr_token=0.0000 name_char=0.4706
+    S1  [S1-550605615]: '2246 Church Plaza Associates' | '22711 Highway 169, Fort Dodge, IA' | US
+    Match [S3-199795606]: '2246 Church' | '' | US
+
+  #4 addr_char=0.0000 addr_token=0.0000 name_char=0.7857
+    S1  [S1-686465524]: 'Huff, Mendez and White' | '902 28th Street, Lubbock, TX' | US
+    Match [S2-611559625]: 'Huff, Mendez and' | '' | US
+
+  #5 addr_char=0.0000 addr_token=0.0000 name_char=0.9231
+    S1  [S1-180206717]: 'Linnet's Property Solutions' | '403 Severn Way, Edgewood, MD' | US
+    Match [S2-984091186]: 'Linnet's  Property' | '' | US
+
+  #6 addr_char=0.0000 addr_token=0.0000 name_char=0.9231
+    S1  [S1-180206717]: 'Linnet's Property Solutions' | '403 Severn Way, Edgewood, MD' | US
+    Match [S3-479389074]: 'Linnet's Property' | '' | US
+
+  #7 addr_char=0.0000 addr_token=0.0000 name_char=0.8571
+    S1  [S1-153229012]: 'The Dent Nails Partners' | '10438 Burlington Drive, Grand Bay, AL' | US
+    Match [S3-41529237]: 'The Dent Nails Partners Corp Enterprises' | '' | US
+
+  #8 addr_char=0.0000 addr_token=0.0000 name_char=0.8000
+    S1  [S1-778442477]: 'Horizon Digital Holdings' | '1110 Jefferson Street, Waxahachie, TX' | US
+    Match [S2-28045503]: 'Horizon Holdings Center' | '' | US
+
+  #9 addr_char=0.0000 addr_token=0.0000 name_char=1.0000
+    S1  [S1-226099106]: 'XO Allied Marketing LLC' | 'Beverly, WV, 57 Tacy Lane' | US
+    Match [S3-457727738]: 'xo allied marketing llc' | '' | US
+
+  #10 addr_char=0.0000 addr_token=0.0000 name_char=0.6923
+    S1  [S1-774848541]: 'Coastal Center' | '4914 Cayman Street, Sioux Falls, SD' | US
+    Match [S2-880969832]: 'Coastal Sérvice' | '' | US
+
+  #11 addr_char=0.0000 addr_token=0.0000 name_char=0.8182
+    S1  [S1-827003387]: 'Arts Cornerstone Center' | '2184 Wilshire Circle, Batavia, OH' | US
+    Match [S2-764546784]: 'Arts Cornerstone (Center)' | '' | US
+
+  #12 addr_char=0.0000 addr_token=0.0000 name_char=0.8571
+    S1  [S1-55649452]: 'Lower Endocrinology' | '484 Main Street, Fitchburg, MA' | US
+    Match [S3-225460320]: 'Lower Endocrienthogy' | '' | US
+
+  #13 addr_char=0.0000 addr_token=0.0000 name_char=1.0000
+    S1  [S1-207222009]: 'Chery and Valdez Electronics' | '1925 Richmond Dr, Louisville, KY' | US
+    Match [S3-651264370]: 'Chery and Vaanldez Electronics' | '' | US
+
+  #14 addr_char=0.0000 addr_token=0.0000 name_char=0.7222
+    S1  [S1-891990458]: 'Kishan Garh Cloud' | 'C/O Vardhman Granito, Kh No.240/10, Nikhar, Kalidungari, Kishangarh, Kishan Garh, Ajmer, Rajasthan' | India
+    Match [S3-22510221]: 'Kishan Gmth (Cloud)' | '' | India
+
+  #15 addr_char=0.0000 addr_token=0.0000 name_char=1.0000
+    S1  [S1-513160974]: 'Meza, Rusnak & Resh Biotechnologies PLLC' | '972 Gibbs Crossing, Coppell, TX' | US
+    Match [S3-425174339]: 'MEZA, RUSNAK & RESH BIOTECHNOLOGIES PLLC' | '' | US
+
+--- 10 EASY positive pairs (highest name char Jaccard, sanity check) ---
+
+  #1 name_char=1.0000 name_token=1.0000
+    S1  [S1-781395531]: 'Horizon Agricultural Enterprises LLC' | '102 Kelly Avenue, Unit 9, Town Of Bel Air, MD' | US
+    Match [S2-851138709]: 'Llc Horizon Agricultural Enterprises' | '102 KELLY AVE, TOWN OF BEL AIR, MD' | US
+
+  #2 name_char=1.0000 name_token=1.0000
+    S1  [S1-781395531]: 'Horizon Agricultural Enterprises LLC' | '102 Kelly Avenue, Unit 9, Town Of Bel Air, MD' | US
+    Match [S2-164945185]: 'Horizon Agricultural Enterprises Llc' | '102 KELLY AVE, TOWN OF BEL AIR, MD' | US
+
+  #3 name_char=1.0000 name_token=1.0000
+    S1  [S1-901098801]: 'XL Polymer Shaikpet Private Limited' | '8-2-293/82/A/5, P No. 512, Road No 31, Jubilee Hills, Shaikpet, Hyderabad, Telangana' | India
+    Match [S3-188280294]: 'Private Xl Polymer Shaikpet Limited' | '8-2-293/82/A/5/2, P No. 512, Road No 31, Jubilee Hills, Shaikpet, Hyderabad, తెలంగాణ' | India
+
+  #4 name_char=1.0000 name_token=0.6667
+    S1  [S1-901098801]: 'XL Polymer Shaikpet Private Limited' | '8-2-293/82/A/5, P No. 512, Road No 31, Jubilee Hills, Shaikpet, Hyderabad, Telangana' | India
+    Match [S3-795475946]: 'XL Polymer Shaikpet Private Ltd' | '8-2-293/82/A/5/2, Shaikpet, Hyderabad, TG' | India
+
+  #5 name_char=1.0000 name_token=0.5000
+    S1  [S1-922404929]: 'Stafani Class, Ph.D.' | '21367 Puesta Del Sol, Queen Creek, AZ' | US
+    Match [S2-562935057]: 'class,, stafani ph.d.' | '21367 PUESTA DEL SOL, QUEEN CREEK, AZ' | US
+
+  #6 name_char=1.0000 name_token=1.0000
+    S1  [S1-922404929]: 'Stafani Class, Ph.D.' | '21367 Puesta Del Sol, Queen Creek, AZ' | US
+    Match [S2-679117201]: 'stafani class, ph.d.' | '21367 PUESTA DEL SOL, QUEEN CREEK, AZ' | US
+
+  #7 name_char=1.0000 name_token=1.0000
+    S1  [S1-922404929]: 'Stafani Class, Ph.D.' | '21367 Puesta Del Sol, Queen Creek, AZ' | US
+    Match [S3-260029091]: 'Stafani Class, Ph.D.' | '21367 Puesta Del Sol, Queen Creek, Arizona' | US
+
+  #8 name_char=1.0000 name_token=1.0000
+    S1  [S1-323810689]: 'United United System LLC' | 'MA, Wareham, 12 C W Bishop Avenue' | US
+    Match [S2-709044243]: 'United System United LLC' | '12 C W BISHOP AVE, WAREHAM, MA' | US
+
+  #9 name_char=1.0000 name_token=1.0000
+    S1  [S1-323810689]: 'United United System LLC' | 'MA, Wareham, 12 C W Bishop Avenue' | US
+    Match [S3-598979610]: 'System United United LLC' | '12. C W Bishop Avenue, Wareham, Massachusetts' | US
+
+  #10 name_char=1.0000 name_token=1.0000
+    S1  [S1-575857365]: 'Optimal Recruiting P.C.' | 'Columbus, OH, 2406 Arborview Drive' | US
+    Match [S3-670144067]: 'Optimal Recruiting  P.C.' | '2406 Arborview Drive, Columbus, Ohio' | US
+
+================================================================================
+END OF PHASE 1 FORENSICS REPORT
+================================================================================
