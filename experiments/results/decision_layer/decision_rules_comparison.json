@@ -1,0 +1,38 @@
+[
+  {
+    "Decision Rule":"V1 Baseline: Strict Margin (0.18)",
+    "Macro F0.5":0.9850581635,
+    "Precision":0.9952449109,
+    "Recall":0.9628657761,
+    "Singleton F0.5":1.0,
+    "FP":11,
+    "FN":79
+  },
+  {
+    "Decision Rule":"Relaxed Margin (0.35)",
+    "Macro F0.5":0.9850581635,
+    "Precision":0.9952449109,
+    "Recall":0.9628657761,
+    "Singleton F0.5":1.0,
+    "FP":11,
+    "FN":79
+  },
+  {
+    "Decision Rule":"Adaptive Margin (Keep >= 0.70; margin 0.20 for <0.70)",
+    "Macro F0.5":0.9850581635,
+    "Precision":0.9952449109,
+    "Recall":0.9628657761,
+    "Singleton F0.5":1.0,
+    "FP":11,
+    "FN":79
+  },
+  {
+    "Decision Rule":"Pure Threshold (No margin filtering above thresh)",
+    "Macro F0.5":0.9850581635,
+    "Precision":0.9952449109,
+    "Recall":0.9628657761,
+    "Singleton F0.5":1.0,
+    "FP":11,
+    "FN":79
+  }
+]
