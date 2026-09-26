@@ -40,7 +40,26 @@ from src.models.threshold import evaluate_predictions, sweep_thresholds
 from src.decision import EntityDecisionEngine
 from src.error_analysis import analyze_errors, format_error_summary
 
-BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'Dataset'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+def resolve_dataset_dir(custom_path: Optional[str] = None) -> str:
+    if custom_path and os.path.exists(custom_path):
+        return os.path.abspath(custom_path)
+    for candidate in ['dataset', 'Dataset', 'DATASET']:
+        p = os.path.join(REPO_ROOT, candidate)
+        if os.path.isdir(p):
+            return p
+    for candidate in [
+        '/content/drive/MyDrive/Amazon-ML-Drive/dataset',
+        '/content/drive/MyDrive/Amazon-ML-Drive/Dataset',
+        '/content/dataset',
+        '/content/Dataset',
+    ]:
+        if os.path.isdir(candidate):
+            return candidate
+    return os.path.join(REPO_ROOT, 'Dataset')
+
+BASE = resolve_dataset_dir()
 EXPERIMENTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'experiments'))
 RESULTS_DIR = os.path.join(EXPERIMENTS_DIR, 'results')
 MODELS_DIR = os.path.join(EXPERIMENTS_DIR, 'models')
@@ -50,6 +69,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train business entity resolution matcher")
+    parser.add_argument('--dataset-dir', type=str, default=None, help="Path to Dataset/ or dataset/ directory")
     parser.add_argument('--sample-s1', type=int, default=6000, help="Number of S1 entities to sample for train+val")
     parser.add_argument('--val-ratio', type=float, default=0.25, help="Ratio of sampled S1 entities for validation")
     parser.add_argument('--max-s2s3-country', type=int, default=30000, help="Negative candidates per country in pool")
@@ -189,9 +209,16 @@ def main():
     print(f"AMAZON ML CHALLENGE — TRAINING & EVALUATION PIPELINE [{args.exp_name}]", flush=True)
     print("=" * 70, flush=True)
     
+    dataset_dir = resolve_dataset_dir(args.dataset_dir)
+    print(f"\n[Dataset] Resolved dataset directory: {dataset_dir}", flush=True)
+    if not os.path.exists(os.path.join(dataset_dir, 'train', 'train_ground_truth.tsv')):
+        raise FileNotFoundError(
+            f"Could not locate 'train/train_ground_truth.tsv' in '{dataset_dir}'.\n"
+            f"Please ensure the dataset is uploaded and specify its location using: --dataset-dir <path_to_dataset>"
+        )
     # 1. Load data
     s1_df, s2s3_df, ground_truth, sampled_s1_ids = load_dataset_sample(
-        BASE, args.sample_s1, args.max_s2s3_country, args.seed
+        dataset_dir, args.sample_s1, args.max_s2s3_country, args.seed
     )
     
     # 2. Phase 7: Split S1 entities at entity-level (NO pair leakage)

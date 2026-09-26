@@ -35,7 +35,25 @@ from src.models.lightgbm_model import LightGBMMatcher
 from src.decision import EntityDecisionEngine
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-DATASET_DIR = os.path.join(BASE, 'Dataset')
+
+def resolve_test_dir(custom_path: str = None) -> str:
+    if custom_path and os.path.exists(custom_path):
+        return os.path.abspath(custom_path)
+    for candidate in ['Dataset', 'dataset', 'DATASET']:
+        p = os.path.join(BASE, candidate, 'test')
+        if os.path.isdir(p):
+            return p
+    for candidate in [
+        '/content/drive/MyDrive/Amazon-ML-Drive/Dataset/test',
+        '/content/drive/MyDrive/Amazon-ML-Drive/dataset/test',
+        '/content/Dataset/test',
+        '/content/dataset/test',
+        '/content/test',
+    ]:
+        if os.path.isdir(candidate):
+            return candidate
+    return os.path.join(BASE, 'Dataset', 'test')
+
 OUTPUT_DIR = os.path.join(BASE, 'output')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -43,12 +61,12 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate submission files for test set")
     parser.add_argument('--model-path', type=str, required=True, help="Path to trained matcher joblib model")
-    parser.add_argument('--test-dir', type=str, default=os.path.join(DATASET_DIR, 'test'), help="Path to test dataset")
+    parser.add_argument('--test-dir', type=str, default=None, help="Path to test dataset")
     parser.add_argument('--output-dir', type=str, default=OUTPUT_DIR, help="Output directory for submission files")
     parser.add_argument('--candidate-cap', type=int, default=40, help="Max candidates per S1 passed to model")
     parser.add_argument('--threshold', type=float, default=0.70, help="Decision threshold")
     parser.add_argument('--limit-s1', type=int, default=None, help="Diagnostic limit on S1 entities (None for full test set)")
-    parser.add_argument('--batch-s1', type=int, default=5000, help="Batch size for S1 processing")
+    parser.add_argument('--batch-s1', type=int, default=10000, help="Batch size for S1 processing")
     return parser.parse_args()
 
 
@@ -255,7 +273,13 @@ def main():
     print("  Model loaded successfully.", flush=True)
     
     # 2. Load test S1
+    args.test_dir = resolve_test_dir(args.test_dir)
     print(f"\n[2] Loading test S1 entities from: {args.test_dir}...", flush=True)
+    if not os.path.exists(os.path.join(args.test_dir, 'test_source1.tsv')):
+        raise FileNotFoundError(
+            f"Could not locate 'test_source1.tsv' in '{args.test_dir}'.\n"
+            f"Please verify where test files are located and pass: --test-dir <path_to_test_dir>"
+        )
     t0 = time.time()
     s1_path = os.path.join(args.test_dir, 'test_source1.tsv')
     s1_df = load_tsv(s1_path)
