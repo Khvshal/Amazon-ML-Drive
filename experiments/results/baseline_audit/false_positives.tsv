@@ -1,0 +1,17 @@
+source1_entity_id	predicted_entity_id	source	model_score	threshold	country	s1_name	cand_name	s1_addr	cand_addr	s1_cardinality	fp_category
+S1-211019453	S2-30358257	S2	0.8912	0.44	India	Optima College Ltd	ஜெய் கன்ஸ்ட்ரக்ஷன் பிரைவேட் லிமிடெட்	Tamil Nadu, Thoothukudi, 5A/526C, Thoothukudi, Cald Well Colony	5A/526C, THOOTHUKUDI, Tamil Nadu	4	ambiguous_name_similarity
+S1-387663358	S3-513258945	S3	0.863	0.44	India	Sauhard Welfare Society Limited	Delhi Gabnse Private Limited	Shop No.26 & 27, Ground Floor, Parsavnath Metro Mall, Inderlok, New Delhi, New Delhi, North West, Delhi	27, Delhi, North West, DL	2	ambiguous_name_similarity
+S1-567630778	S2-889447275	S2	0.9544	0.44	India	Apex Investments Pvt Ltd	ब्लैक फाउंडेशन प्राइवेट लिमिटेड	524 Nibr Corporate Park Cts No 669 670 671 Kurla Andheri Rd Safed Pool, Kurla W, Mumbai, Mumbai City, Maharashtra	DOOR NO 801 NIBR CORPORATE PARK CTS NO 669 670 AND 671, KURLA ANDHERI ROAD OPP VAISHALI HOTEL SAFED POOL KURLA WEST, MUMBAI, Maharashtra	4	ambiguous_name_similarity
+S1-708103865	S3-952447555	S3	0.9865	0.44	US	Youth Center	Youth [Center]	3012 Amber Way, Schererville, IN		3	ambiguous_name_similarity
+S1-339115713	S3-563378709	S3	0.9015	0.44	US	Fresh Pilates PC	Preferred Fresenius	MO, Independence, 3728 Osage Street	Osage Street, Independence, Missouri	4	ambiguous_name_similarity
+S1-954509663	S2-124052626	S2	0.9125	0.44	US	Huizar Allstate Inc	Inc Select Annochr Diversified	30 Chadwick Road, Binghamton, NY	30 CHADWICK RODA, BINGHAMTON, NY	2	ambiguous_name_similarity
+S1-90517322	S2-591825552	S2	0.8091	0.44	US	Gulf Trust	Herrera Plalinum  Research	Cary, NC, 107 Grande Sky Court	107 OCALA CT, CARY, NC	3	threshold_marginal_collision
+S1-90517322	S3-558836015	S3	0.9562	0.44	US	Gulf Trust	Herrera Platinum Research Corporation	Cary, NC, 107 Grande Sky Court	107 Ocala Ct, Cary, North Carolina	3	ambiguous_name_similarity
+S1-63373412	S2-390581904	S2	0.9046	0.44	US	Domaia Corp	Annabela's Jewelers Co	10290 Galena Road, Yorkville, IL	10290 GALENA RD, BRISTOL, IL	3	ambiguous_name_similarity
+S1-564466082	S2-775530136	S2	0.9942	0.44	US	Strategic Genomic Digital, LLC	Iribelotavo	200 Birch Street, Village Of Woodville, WI	200 BIRCH STREET, VILLAGE OF WOODVILLE, WI	2	ambiguous_name_similarity
+S1-536877574	S2-44830724	S2	0.9565	0.44	US	Piedmont College	Piedmont College LLC	122 Loma Vista Drive, Tempe, AZ		2	ambiguous_name_similarity
+S1-461739450	S2-905930241	S2	0.9449	0.44	India	Lakshmi Healthcare Private Limited	Lakshmi Healthcare Private Ltd	Sreerangamtempleroad, Aluva, Ernakulam, Kerala		5	ambiguous_name_similarity
+S1-841892817	S3-836019296	S3	0.847	0.44	US	Herrera Platinum Research	GULF TRUST	107 Ocala Court, Cary, NC	107 Grnade Sky Ct, Cary, North Carolina	2	threshold_marginal_collision
+S1-841892817	S3-718816440	S3	0.847	0.44	US	Herrera Platinum Research	Gulf Trust	107 Ocala Court, Cary, NC	107 Grande Sky Ct, Cary, North Carolina	2	threshold_marginal_collision
+S1-841892817	S3-889654000	S3	0.8327	0.44	US	Herrera Platinum Research	Gulf  Trust Corp	107 Ocala Court, Cary, NC	107 Grande Sky Court, Cary, North Carolina	2	threshold_marginal_collision
+S1-59323470	S2-871372508	S2	0.9651	0.44	India	Hari Trading Private Limited	ಶಕ್ತಿ ಎಸ್ಟೇಟ್ ಪ್ರೈವೇಟ್ ಲಿಮಿಟೆಡ್	78/1, 11Th A Main, Begur, Main Road Hongasandra, Bangalore South, Bangalore, Karnataka	91, 11TH MAIN, BEGUR MAIN ROAD HONGASANDRA, BANGALORE, Karnataka	2	ambiguous_name_similarity
