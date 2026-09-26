@@ -93,21 +93,152 @@ def load_s2s3_for_country(test_dir: str, country: str, max_records: int = None) 
     return entities
 
 
-def run_country_blocking(s1_entities: list, s2s3_entities: list, cap: int = 40) -> dict:
-    """Run full blocking union country-scoped with prioritized consensus capping."""
-    ba = block_exact(s1_entities, s2s3_entities, key_field='name_lower')
-    bb = block_exact(s1_entities, s2s3_entities, key_field='name_core')
-    bb2 = block_sorted_tokens(s1_entities, s2s3_entities, tokens_field='name_sorted_tokens')
-    bc = block_rare_tokens(s1_entities, s2s3_entities, tokens_field='name_tokens', min_idf=3.0, max_candidates_per_token=50)
-    bd = block_numeric(s1_entities, s2s3_entities, numerics_field='addr_numerics', min_shared_numerics=2)
-    be = block_tfidf(s1_entities, s2s3_entities, text_field='name_lower', analyzer='char_wb', ngram_range=(2, 5), top_k=10, min_similarity=0.15)
-    bf = block_tfidf(s1_entities, s2s3_entities, text_field='name_core', analyzer='word', ngram_range=(1, 2), top_k=10, min_similarity=0.15)
-    bg = block_tfidf(s1_entities, s2s3_entities, text_field='addr_normalized', analyzer='char_wb', ngram_range=(2, 5), top_k=10, min_similarity=0.15)
-    
-    blocks_dict = {'A': ba, 'B': bb, 'B2': bb2, 'C': bc, 'D': bd, 'E': be, 'F': bf, 'G': bg}
-    if cap > 0:
-        return prioritized_cap_candidates(blocks_dict, max_per_s1=cap)
-    return union_candidates(ba, bb, bb2, bc, bd, be, bf, bg)
+from collections import defaultdict
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+
+class CountryBlockingEngine:
+    """Prebuilds blocking indexes once per country for high-speed full-dataset candidate generation."""
+    def __init__(self, s2s3_entities: list, country: str):
+        self.country = country
+        print(f"  [Indexer] Prebuilding blocking indexes for {country} ({len(s2s3_entities)} candidates)...", flush=True)
+        t0 = time.time()
+        
+        # 1. Exact Name Indexes
+        self.idx_name_lower = defaultdict(list)
+        self.idx_name_core = defaultdict(list)
+        self.idx_sorted_tokens = defaultdict(list)
+        for ent in s2s3_entities:
+            eid = ent['entity_id']
+            nl = ent.get('name_lower', '')
+            if nl:
+                self.idx_name_lower[nl].append(eid)
+            nc = ent.get('name_core', '')
+            if nc:
+                self.idx_name_core[nc].append(eid)
+            toks = tuple(ent.get('name_sorted_tokens', []))
+            if toks:
+                self.idx_sorted_tokens[toks].append(eid)
+                
+        # 2. Rare Tokens Index
+        token_doc_count = defaultdict(int)
+        for ent in s2s3_entities:
+            for tok in set(ent.get('name_tokens', [])):
+                token_doc_count[tok] += 1
+        n_docs = len(s2s3_entities)
+        self.rare_token_index = defaultdict(list)
+        for ent in s2s3_entities:
+            eid = ent['entity_id']
+            for tok in set(ent.get('name_tokens', [])):
+                df = token_doc_count[tok]
+                if df <= max(10, int(n_docs * 0.10)):
+                    self.rare_token_index[tok].append(eid)
+                    
+        # 3. Numeric / Postal Index
+        self.idx_numeric = defaultdict(list)
+        for ent in s2s3_entities:
+            eid = ent['entity_id']
+            for num in set(ent.get('addr_numerics', [])):
+                if len(num) >= 2:
+                    self.idx_numeric[num].append(eid)
+        self.idx_numeric = {k: v for k, v in self.idx_numeric.items() if len(v) <= 500}
+        
+        # 4. TF-IDF Vectorizers & Transposed Sparse Matrices
+        # Block E: Name char_wb
+        self.vec_e = TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 5), min_df=2, max_df=0.95, sublinear_tf=True, dtype=np.float32)
+        valid_e = [(e.get('name_lower', ''), e['entity_id']) for e in s2s3_entities if e.get('name_lower', '').strip()]
+        if valid_e:
+            self.e_ids = [eid for _, eid in valid_e]
+            self.mat_e_t = self.vec_e.fit_transform([t for t, _ in valid_e]).T.tocsc()
+        else:
+            self.mat_e_t = None
+            
+        # Block F: Name word
+        self.vec_f = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=2, max_df=0.95, sublinear_tf=True, dtype=np.float32)
+        valid_f = [(e.get('name_core', ''), e['entity_id']) for e in s2s3_entities if e.get('name_core', '').strip()]
+        if valid_f:
+            self.f_ids = [eid for _, eid in valid_f]
+            self.mat_f_t = self.vec_f.fit_transform([t for t, _ in valid_f]).T.tocsc()
+        else:
+            self.mat_f_t = None
+            
+        # Block G: Address char_wb
+        self.vec_g = TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 5), min_df=2, max_df=0.95, sublinear_tf=True, dtype=np.float32)
+        valid_g = [(e.get('addr_normalized', ''), e['entity_id']) for e in s2s3_entities if e.get('addr_normalized', '').strip()]
+        if valid_g:
+            self.g_ids = [eid for _, eid in valid_g]
+            self.mat_g_t = self.vec_g.fit_transform([t for t, _ in valid_g]).T.tocsc()
+        else:
+            self.mat_g_t = None
+            
+        print(f"  [Indexer] Prebuilt all 8 indexes in {time.time()-t0:.1f}s", flush=True)
+
+    def query_tfidf(self, s1_entities: list, vec, mat_t, s2s3_ids: list, text_field: str, top_k: int = 10, min_sim: float = 0.15) -> dict:
+        cands = {e['entity_id']: set() for e in s1_entities}
+        if mat_t is None or not vec:
+            return cands
+        valid_s1 = [(e.get(text_field, ''), e['entity_id']) for e in s1_entities if e.get(text_field, '').strip()]
+        if not valid_s1:
+            return cands
+        s1_texts = [t for t, _ in valid_s1]
+        s1_eids = [i for _, i in valid_s1]
+        s1_mat = vec.transform(s1_texts)
+        sim_mat = s1_mat.dot(mat_t).tocsr()
+        
+        for local_idx in range(sim_mat.shape[0]):
+            r_start = sim_mat.indptr[local_idx]
+            r_end = sim_mat.indptr[local_idx + 1]
+            n_nonzeros = r_end - r_start
+            if n_nonzeros == 0:
+                continue
+            r_data = sim_mat.data[r_start:r_end]
+            r_indices = sim_mat.indices[r_start:r_end]
+            if n_nonzeros <= top_k:
+                mask = r_data >= min_sim
+                top_cols = r_indices[mask]
+            else:
+                part = np.argpartition(r_data, -top_k)[-top_k:]
+                valid = r_data[part] >= min_sim
+                top_cols = r_indices[part[valid]]
+            sid = s1_eids[local_idx]
+            for col in top_cols:
+                cands[sid].add(s2s3_ids[col])
+        return cands
+
+    def block_batch(self, s1_entities: list, cap: int = 40) -> dict:
+        ba = {e['entity_id']: set(self.idx_name_lower.get(e.get('name_lower', ''), [])) for e in s1_entities}
+        bb = {e['entity_id']: set(self.idx_name_core.get(e.get('name_core', ''), [])) for e in s1_entities}
+        bb2 = {e['entity_id']: set(self.idx_sorted_tokens.get(tuple(e.get('name_sorted_tokens', [])), [])) for e in s1_entities}
+        
+        # bc: rare tokens
+        bc = {}
+        for e in s1_entities:
+            sid = e['entity_id']
+            cnts = defaultdict(int)
+            for tok in set(e.get('name_tokens', [])):
+                for cid in self.rare_token_index.get(tok, [])[:50]:
+                    cnts[cid] += 1
+            bc[sid] = set(cnts.keys())
+            
+        # bd: numeric
+        bd = {}
+        for e in s1_entities:
+            sid = e['entity_id']
+            cnts = defaultdict(int)
+            for num in set(e.get('addr_numerics', [])):
+                if len(num) >= 2:
+                    for cid in self.idx_numeric.get(num, []):
+                        cnts[cid] += 1
+            bd[sid] = {cid for cid, count in cnts.items() if count >= 2}
+            
+        be = self.query_tfidf(s1_entities, self.vec_e, self.mat_e_t, self.e_ids, 'name_lower', top_k=10, min_sim=0.15)
+        bf = self.query_tfidf(s1_entities, self.vec_f, self.mat_f_t, self.f_ids, 'name_core', top_k=10, min_sim=0.15)
+        bg = self.query_tfidf(s1_entities, self.vec_g, self.mat_g_t, self.g_ids, 'addr_normalized', top_k=10, min_sim=0.15)
+        
+        blocks_dict = {'A': ba, 'B': bb, 'B2': bb2, 'C': bc, 'D': bd, 'E': be, 'F': bf, 'G': bg}
+        if cap > 0:
+            return prioritized_cap_candidates(blocks_dict, max_per_s1=cap)
+        return union_candidates(ba, bb, bb2, bc, bd, be, bf, bg)
 
 
 def main():
@@ -173,6 +304,9 @@ def main():
         s2s3_dict = load_s2s3_for_country(args.test_dir, country, max_records=max_s2s3)
         s2s3_entities_list = list(s2s3_dict.values())
         
+        # Prebuild all 8 blocking indexes once for this country
+        blocking_engine = CountryBlockingEngine(s2s3_entities_list, country)
+        
         # Process S1 in batches
         batch_size = args.batch_s1
         for i in range(0, len(s1_records), batch_size):
@@ -180,8 +314,8 @@ def main():
             s1_dict = normalize_records(s1_batch_records)
             s1_entities_list = list(s1_dict.values())
             
-            # Blocking
-            candidates = run_country_blocking(s1_entities_list, s2s3_entities_list, cap=args.candidate_cap)
+            # Fast blocking query against prebuilt indexes
+            candidates = blocking_engine.block_batch(s1_entities_list, cap=args.candidate_cap)
             
             # Feature extraction
             X_batch, _, pair_ids = build_pair_feature_matrix(candidates, s1_dict, s2s3_dict)
@@ -217,7 +351,7 @@ def main():
             del s1_dict, s1_entities_list, candidates, X_batch, probs, s1_scored, decisions
             gc.collect()
             
-        del s2s3_dict, s2s3_entities_list
+        del blocking_engine, s2s3_dict, s2s3_entities_list
         gc.collect()
         
     # If in limit mode, write remaining test S1 entities as singletons to satisfy full schema validation
