@@ -79,13 +79,41 @@ def parse_args():
     return parser.parse_args()
 
 
+def locate_data_file(base_dir: str, subfolder: str, filename: str) -> str:
+    """Robustly locate a data file regardless of subfolder casing or direct placement."""
+    std = os.path.join(base_dir, subfolder, filename)
+    if os.path.exists(std):
+        return std
+    if os.path.exists(base_dir):
+        # Check subfolder variations (e.g. Train vs train)
+        for entry in os.listdir(base_dir):
+            if entry.lower() == subfolder.lower():
+                cand = os.path.join(base_dir, entry, filename)
+                if os.path.exists(cand):
+                    return cand
+                for f in os.listdir(os.path.join(base_dir, entry)):
+                    if f.lower() == filename.lower():
+                        return os.path.join(base_dir, entry, f)
+        # Check direct placement in base_dir
+        direct = os.path.join(base_dir, filename)
+        if os.path.exists(direct):
+            return direct
+        # Recursive search across base_dir
+        for root, _, files in os.walk(base_dir):
+            for f in files:
+                if f.lower() == filename.lower():
+                    return os.path.join(root, f)
+    return std
+
+
 def load_dataset_sample(base_dir: str, n_s1: int, max_s2s3_per_country: int, seed: int):
     """Load S1 sample and S2/S3 candidate pool with memory-efficient streaming."""
     rng = np.random.RandomState(seed)
     
     print("\n[Step 1] Loading ground truth...", flush=True)
     t0 = time.time()
-    gt_path = os.path.join(base_dir, 'train', 'train_ground_truth.tsv')
+    gt_path = locate_data_file(base_dir, 'train', 'train_ground_truth.tsv')
+    print(f"  GT File: {gt_path}", flush=True)
     s1_with_matches = []
     s1_singletons = []
     gt_dict = {}
@@ -121,7 +149,8 @@ def load_dataset_sample(base_dir: str, n_s1: int, max_s2s3_per_country: int, see
     print("\n[Step 2] Extracting S1 rows...", flush=True)
     t0 = time.time()
     s1_rows = []
-    s1_path = os.path.join(base_dir, 'train', 'train_source1.tsv')
+    s1_path = locate_data_file(base_dir, 'train', 'train_source1.tsv')
+    print(f"  S1 File: {s1_path}", flush=True)
     for chunk in pd.read_csv(s1_path, sep='\t', chunksize=200000, dtype=str, keep_default_na=False):
         subset = chunk[chunk['entity_id'].isin(sampled_s1_set)]
         if len(subset) > 0:
@@ -138,7 +167,8 @@ def load_dataset_sample(base_dir: str, n_s1: int, max_s2s3_per_country: int, see
     country_counts = {c: 0 for c in countries}
     
     for src_num in (2, 3):
-        src_path = os.path.join(base_dir, 'train', f'train_source{src_num}.tsv')
+        src_path = locate_data_file(base_dir, 'train', f'train_source{src_num}.tsv')
+        print(f"  Source {src_num} File: {src_path}", flush=True)
         for chunk in pd.read_csv(src_path, sep='\t', chunksize=200000, dtype=str, keep_default_na=False):
             m_chunk = chunk[chunk['entity_id'].isin(needed_s2s3)]
             if len(m_chunk) > 0:
@@ -210,12 +240,14 @@ def main():
     print("=" * 70, flush=True)
     
     dataset_dir = resolve_dataset_dir(args.dataset_dir)
-    print(f"\n[Dataset] Resolved dataset directory: {dataset_dir}", flush=True)
-    if not os.path.exists(os.path.join(dataset_dir, 'train', 'train_ground_truth.tsv')):
+    print(f"\n[Dataset] Searching for dataset in: {dataset_dir}", flush=True)
+    gt_check = locate_data_file(dataset_dir, 'train', 'train_ground_truth.tsv')
+    if not os.path.exists(gt_check):
         raise FileNotFoundError(
-            f"Could not locate 'train/train_ground_truth.tsv' in '{dataset_dir}'.\n"
+            f"Could not locate 'train_ground_truth.tsv' in or under '{dataset_dir}'.\n"
             f"Please ensure the dataset is uploaded and specify its location using: --dataset-dir <path_to_dataset>"
         )
+    print(f"  Located ground truth file at: {gt_check}", flush=True)
     # 1. Load data
     s1_df, s2s3_df, ground_truth, sampled_s1_ids = load_dataset_sample(
         dataset_dir, args.sample_s1, args.max_s2s3_country, args.seed

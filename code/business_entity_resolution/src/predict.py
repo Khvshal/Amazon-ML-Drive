@@ -86,6 +86,30 @@ def normalize_records(records: list) -> dict:
     return entities
 
 
+def locate_data_file(base_dir: str, subfolder: str, filename: str) -> str:
+    """Robustly locate a data file regardless of subfolder casing or direct placement."""
+    std = os.path.join(base_dir, subfolder, filename)
+    if os.path.exists(std):
+        return std
+    if os.path.exists(base_dir):
+        for entry in os.listdir(base_dir):
+            if entry.lower() == subfolder.lower():
+                cand = os.path.join(base_dir, entry, filename)
+                if os.path.exists(cand):
+                    return cand
+                for f in os.listdir(os.path.join(base_dir, entry)):
+                    if f.lower() == filename.lower():
+                        return os.path.join(base_dir, entry, f)
+        direct = os.path.join(base_dir, filename)
+        if os.path.exists(direct):
+            return direct
+        for root, _, files in os.walk(base_dir):
+            for f in files:
+                if f.lower() == filename.lower():
+                    return os.path.join(root, f)
+    return std
+
+
 def load_s2s3_for_country(test_dir: str, country: str, max_records: int = None) -> dict:
     """Stream and normalize S2+S3 entities for a specific country."""
     print(f"  [Load S2/S3] Streaming {country} entities...", flush=True)
@@ -93,7 +117,7 @@ def load_s2s3_for_country(test_dir: str, country: str, max_records: int = None) 
     records = []
     
     for src_num in (2, 3):
-        path = os.path.join(test_dir, f'test_source{src_num}.tsv')
+        path = locate_data_file(test_dir, 'test', f'test_source{src_num}.tsv')
         for chunk in pd.read_csv(path, sep='\t', chunksize=200000, dtype=str, keep_default_na=False):
             subset = chunk[chunk['country'] == country]
             if len(subset) > 0:
@@ -274,14 +298,15 @@ def main():
     
     # 2. Load test S1
     args.test_dir = resolve_test_dir(args.test_dir)
-    print(f"\n[2] Loading test S1 entities from: {args.test_dir}...", flush=True)
-    if not os.path.exists(os.path.join(args.test_dir, 'test_source1.tsv')):
+    print(f"\n[2] Searching for test files in: {args.test_dir}...", flush=True)
+    s1_path = locate_data_file(args.test_dir, 'test', 'test_source1.tsv')
+    if not os.path.exists(s1_path):
         raise FileNotFoundError(
-            f"Could not locate 'test_source1.tsv' in '{args.test_dir}'.\n"
+            f"Could not locate 'test_source1.tsv' in or under '{args.test_dir}'.\n"
             f"Please verify where test files are located and pass: --test-dir <path_to_test_dir>"
         )
+    print(f"  Located test_source1 file at: {s1_path}", flush=True)
     t0 = time.time()
-    s1_path = os.path.join(args.test_dir, 'test_source1.tsv')
     s1_df = load_tsv(s1_path)
     all_s1_ids = list(s1_df['entity_id'])
     
